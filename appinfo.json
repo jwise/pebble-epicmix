@@ -1,0 +1,24 @@
+{
+  "uuid": "F25D4470-9E39-471B-8095-F83C0197F291",
+  "shortName": "EpicMix",
+  "longName": "EpicMix Statistics",
+  "companyName": "Emarhavil Heavy Industries",
+  "versionCode": 1,
+  "versionLabel": "0.1",
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "fetch": 0,
+    "username": 1,
+    "vertical": 2
+  },
+  "resources": {
+    "media": []
+  },
+  "targetPlatforms": [
+    "aplite",
+    "basalt"
+  ],
+  "sdkVersion": "3"
+}
