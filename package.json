@@ -2,7 +2,9 @@
   "version": "0.1.0",
   "author": "Emarhavil Heavy Industries",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
   "keywords": [
     "pebble-app"
   ],
@@ -19,7 +21,7 @@
       "fetch": 0,
       "vertical": 2
     },
-    "enableMultiJS": false,
+    "enableMultiJS": true,
     "displayName": "EpicMix Statistics",
     "watchapp": {
       "onlyShownOnCommunication": false,
