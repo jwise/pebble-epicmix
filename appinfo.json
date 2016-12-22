@@ -11,7 +11,8 @@
   "appKeys": {
     "fetch": 0,
     "username": 1,
-    "vertical": 2
+    "vertical": 2,
+    "date": 3
   },
   "resources": {
     "media": []

@@ -3,13 +3,16 @@
 static Window *window;
 static TextLayer *username_layer = NULL;
 static TextLayer *vertical_layer = NULL;
+static TextLayer *date_layer = NULL;
 static char username_text[20];
 static char vertical_text[20];
+static char date_text[20];
 
 enum {
   KEY_FETCH = 0x0,
   KEY_USERNAME = 0x1,
   KEY_VERTICAL = 0x2,
+  KEY_DATE = 0x3,
 };
 
 static void do_refresh(void) {
@@ -22,6 +25,8 @@ static void do_refresh(void) {
     text_layer_set_text(username_layer, "Loading...");
   if (vertical_layer)
     text_layer_set_text(vertical_layer, "--- ft");
+  if (date_layer)
+    text_layer_set_text(date_layer, "---");
 
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
@@ -49,6 +54,7 @@ static void click_config_provider(void *context) {
 static void in_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *username_tuple = dict_find(iter, KEY_USERNAME);
   Tuple *vertical_tuple = dict_find(iter, KEY_VERTICAL);
+  Tuple *date_tuple = dict_find(iter, KEY_DATE);
   
   APP_LOG(APP_LOG_LEVEL_DEBUG, "I have heard something from the phone!");
   
@@ -68,6 +74,12 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
     text_layer_set_text(vertical_layer, vertical_text);
     
     APP_LOG(APP_LOG_LEVEL_DEBUG, "received with vertical text %s", vertical_text);
+  }
+  if (date_tuple) {
+    strncpy(date_text, date_tuple->value->cstring, sizeof(date_text));
+    text_layer_set_text(date_layer, date_text);
+    
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "received with date text %s", date_text);
   }
 }
 
@@ -105,11 +117,19 @@ static void window_load(Window *window) {
   text_layer_set_text_alignment(vertical_layer, GTextAlignmentCenter);
   text_layer_set_font(vertical_layer, fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK));
   layer_add_child(window_layer, text_layer_get_layer(vertical_layer));
+
+  date_layer = text_layer_create(
+      (GRect) { .origin = { 0, 130 }, .size = { bounds.size.w, 50 } });
+  text_layer_set_text(date_layer, ". . .");
+  text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
+  text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  layer_add_child(window_layer, text_layer_get_layer(date_layer));
 }
 
 static void window_unload(Window *window) {
   text_layer_destroy(username_layer);
   text_layer_destroy(vertical_layer);
+  text_layer_destroy(date_layer);
 }
 
 static void init(void) {

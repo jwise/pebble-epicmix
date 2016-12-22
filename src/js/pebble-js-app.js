@@ -1,69 +1,123 @@
 // Fetch saved symbol from local storage (using standard localStorage webAPI)
 var cookie = localStorage.getItem("cookie");
+var username = "joshua@joshuawise.com";
+var password = "<not really my password>";
 
 if (!cookie) {
   /* ... need to log in ... */
 }
 
-function login(username, password) {
+function login(succ, fail) {
   var response;
   var req = new XMLHttpRequest();
   var params = "loginID="+encodeURIComponent(username)+"&password="+encodeURIComponent(password);
-  req.open('POST', 'http://nyus.joshuawise.com:8081/authenticate.ashx', true);
+  req.open('POST', 'http://epicmix-proxy.appspot.com/authenticate.ashx', true);
   req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  console.log("login: here we go");
   req.onload = function(e) {
-    if (req.readyState == 4) {
-      // 200 - HTTP OK
-      if(req.status == 200) {
-        console.log(req.getAllResponseHeaders());
-        console.log(req.responseText);
-        cookie = req.getResponseHeader('x-set-cookie').split(";")[0];
-        getVertical();
-      } else {
-        console.log("Request returned error code " + req.status.toString());
-      }
+    if (req.readyState != 4)
+      return;
+    
+    if (req.status != 200) {
+      console.log("login: request returned error code " + req.status.toString());
+      return fail();
     }
-  }
+
+    //console.log(req.getAllResponseHeaders());
+    //console.log(req.responseText);
+    console.log("login: succeeded");
+    cookie = req.getResponseHeader('x-set-cookie').split(";")[0];
+    
+    response = JSON.parse(req.responseText);
+    
+    succ(response);
+ }
   req.send(params);
 }
-login("joshua@joshuawise.com", "<not really my password>");
 
-function getVertical() {
+function getUrl(url, params, succ, fail, isretry) {
+  if (!cookie) {
+    console.log("getUrl(" + url + "): not logged in -- will try again afterwards");
+    login(function () { getUrl(url, params, succ, fail, isretry); }, fail);
+    return;
+  }
+
   var response;
   var req = new XMLHttpRequest();
-  var params = "timetype=season";
-  req.open('POST', 'http://nyus.joshuawise.com:8081/userstats.ashx', true);
+  var params = params;
+  req.open('POST', 'http://epicmix-proxy.appspot.com/'+url, true);
   req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
   req.setRequestHeader("x-cookie", cookie);
+  console.log("getUrl(" + url + "): doing request with " + params);
   req.onload = function(e) {
-    if (req.readyState == 4) {
-      // 200 - HTTP OK
-      if(req.status == 200) {
-        console.log(req.getAllResponseHeaders());
-        console.log(req.responseText);
-        response = JSON.parse(req.responseText);
-        
-        Pebble.sendAppMessage({"username": response["userName"]});
-        
-        var vertical = 0;
-        for (s in response["seasonStats"])
-          if (response["seasonStats"][s].isCurrentSeason)
-            vertical = response["seasonStats"][s].verticalFeet;
-        
-        Pebble.sendAppMessage({"vertical": vertical});
+    if (req.readyState != 4)
+      return;
+
+    if (req.status != 200) {
+      console.log("getUrl (" + url +"): Request returned error code " + req.status.toString());
+      console.log(req.getAllResponseHeaders());
+      console.log(req.responseText);
+      if (!isretry) {
+        console.log("getUrl (" + url + "): going to try logging in again ...");
+        login(function () { getUrl(url, params, succ, fail, true); }, fail);
       } else {
-        console.log("Request returned error code " + req.status.toString());
-        console.log(req.getAllResponseHeaders());
-        console.log(req.responseText);
+        fail();
       }
+      
+      return;
     }
+    
+    //console.log(req.getAllResponseHeaders());
+    //console.log(req.responseText);
+    response = JSON.parse(req.responseText);
+    succ(response);
   }
   req.send(params);
 }
 
-function getLatestStats() {
-  getVertical();
+function getSeasonStats(succ, fail) {
+  getUrl("userstats.ashx", "timetype=season", succ, fail);
 }
+
+function getDayStats(succ, fail) {
+  getUrl("userstats.ashx", "timetype=day", succ, fail);
+}
+
+function parseSeasonStats() {
+  function succ(data) {
+    Pebble.sendAppMessage({"username": data["userName"]});
+    
+    var vertical = 0;
+    for (s in data["seasonStats"])
+      if (data["seasonStats"][s].isCurrentSeason)
+        vertical = data["seasonStats"][s].verticalFeet;
+    
+    Pebble.sendAppMessage({"vertical": vertical});
+  }
+  
+  function fail() {
+    console.log("arse");
+  }
+  
+  getSeasonStats(succ, fail);
+}
+
+function parseDayStats() {
+  function succ(data) {
+    Pebble.sendAppMessage({"username": data["userName"],
+                           "vertical": data["resortDayStats"][0]["verticalFeet"],
+                           "date": data["resortDayStats"][0]["date"].split(" ")[0],
+                           });
+  }
+  
+  function fail() {
+    console.log("arse");
+  }
+  
+  getDayStats(succ, fail);
+}
+
+
 
 // Set callback for the app ready event
 Pebble.addEventListener("ready",
@@ -78,7 +132,7 @@ Pebble.addEventListener("appmessage",
                         function(e) {
                           console.log("message");
                           if (e.payload.fetch) {
-                            getLatestStats();
+                            parseDayStats();
                           }
                         });
 
