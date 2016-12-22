@@ -1,0 +1,36 @@
+{
+  "version": "0.1.0",
+  "author": "Emarhavil Heavy Industries",
+  "private": true,
+  "dependencies": {},
+  "keywords": [
+    "pebble-app"
+  ],
+  "pebble": {
+    "sdkVersion": "3",
+    "resources": {
+      "media": []
+    },
+    "projectType": "native",
+    "uuid": "f25d4470-9e39-471b-8095-f83c0197f291",
+    "messageKeys": {
+      "username": 1,
+      "date": 3,
+      "fetch": 0,
+      "vertical": 2
+    },
+    "enableMultiJS": false,
+    "displayName": "EpicMix Statistics",
+    "watchapp": {
+      "onlyShownOnCommunication": false,
+      "hiddenApp": false,
+      "watchface": false
+    },
+    "targetPlatforms": [
+      "aplite",
+      "basalt"
+    ],
+    "capabilities": []
+  },
+  "name": "EpicMix"
+}
