@@ -1,13 +1,24 @@
+var Clay = require('pebble-clay');
+var clayConfig = require('./clay-config');
+var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
+
 // Fetch saved symbol from local storage (using standard localStorage webAPI)
 var cookie = localStorage.getItem("cookie");
-var username = "joshua@joshuawise.com";
-var password = "<not really my password>";
+var username = localStorage.getItem("username");
+var password = localStorage.getItem("password");
 
-if (!cookie) {
-  /* ... need to log in ... */
+if (!username || !password || username == "" || password == "") {
+  console.log("looks like I haven't a username or password?  let's open the config page.");
+  Pebble.openURL(clay.generateUrl());
 }
 
 function login(succ, fail) {
+  console.log("logging in with username '"+username+"' and password '"+password+"'");
+  if (!username || !password) {
+    console.log("login: no username / password?");
+    return fail();
+  }
+
   var response;
   var req = new XMLHttpRequest();
   var params = "loginID="+encodeURIComponent(username)+"&password="+encodeURIComponent(password);
@@ -118,7 +129,6 @@ function parseDayStats() {
 }
 
 
-
 // Set callback for the app ready event
 Pebble.addEventListener("ready",
                         function(e) {
@@ -136,3 +146,22 @@ Pebble.addEventListener("appmessage",
                           }
                         });
 
+
+Pebble.addEventListener('showConfiguration', function(e) {
+  Pebble.openURL(clay.generateUrl());
+});
+
+Pebble.addEventListener('webviewclosed', function(e) {
+  if (e && !e.response) {
+    return;
+  }
+  
+  var dict = clay.getSettings(e.response, false);
+  console.log("updating configuration");
+  localStorage.setItem("username", dict.cfg_username.value);
+  localStorage.setItem("password", dict.cfg_password.value);
+  username = dict.cfg_username.value;
+  password = dict.cfg_password.value;
+  
+  Pebble.sendAppMessage({"fetch": "hi there!"});
+});

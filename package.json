@@ -19,7 +19,9 @@
       "username": 1,
       "date": 3,
       "fetch": 0,
-      "vertical": 2
+      "vertical": 2,
+      "cfg_username": 1000,
+      "cfg_password": 1001
     },
     "enableMultiJS": true,
     "displayName": "EpicMix Statistics",
